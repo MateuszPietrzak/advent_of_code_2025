@@ -2,18 +2,14 @@ open! Core
 
 let run solve_1 solve_2 parse_input =
   let open Result.Let_syntax in
-
   let%bind argv =
     let list = Sys.get_argv () in
-    if list |> Array.length |> Int.equal 3 then
-      Ok list
-    else
-      Error "Please specify the input file path and the part number"
+    if list |> Array.length |> Int.equal 3 then Ok list
+    else Error "Please specify the input file path and the part number"
   in
 
   let%bind part =
-    argv.(2)
-    |> Int.of_string_opt
+    argv.(2) |> Int.of_string_opt
     |> Result.of_option ~error:"Could not parse part number"
   in
 
