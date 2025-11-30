@@ -4,8 +4,9 @@ let run solve_1 solve_2 parse_input =
   let open Result.Let_syntax in
 
   let%bind argv =
-    if Int.equal (Array.length (Sys.get_argv ())) 3 then
-      Ok (Sys.get_argv ())
+    let list = Sys.get_argv () in
+    if list |> Array.length |> Int.equal 3 then
+      Ok list
     else
       Error "Please specify the input file path and the part number"
   in
@@ -17,13 +18,18 @@ let run solve_1 solve_2 parse_input =
   in
 
   let file = argv.(1) in
-  let lines = In_channel.read_lines file in
+
+  let%bind lines =
+    try file |> In_channel.read_lines |> Result.return
+    with _ -> Error "Could not find file"
+  in
+
   let t1 = Time_ns.now () in
 
   let%bind () =
     match part with
-    | 1 -> Ok (solve_1 (parse_input lines))
-    | 2 -> Ok (solve_2 (parse_input lines))
+    | 1 -> lines |> parse_input |> solve_1 |> Result.return
+    | 2 -> lines |> parse_input |> solve_2 |> Result.return
     | _ -> Error "Invalid part number"
   in
 
