@@ -1,0 +1,5 @@
+(library
+ (name aoc)
+ (libraries core)
+ (preprocess
+  (pps ppx_let)))
