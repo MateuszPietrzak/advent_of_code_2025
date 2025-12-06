@@ -22,7 +22,9 @@ let solve_2 (ranges, _) =
         else (s, e) :: aux ((s', e') :: xs)
   in
   let combined = aux sorted_ranges in
-  let res = List.fold combined ~init:0 ~f:(fun acc (s, e) -> acc + (e-s+1)) in
+  let res =
+    List.fold combined ~init:0 ~f:(fun acc (s, e) -> acc + (e - s + 1))
+  in
   printf "%d\n" res
 
 let parse_input lines =

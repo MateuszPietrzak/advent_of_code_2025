@@ -11,7 +11,7 @@ let solve_1 input =
           | L -> (acc - num + 10000000) % 100
           | R -> (acc + num) % 100
         in
-        if Int.equal new_acc 0 then Int.incr res else ();
+        if Int.equal new_acc 0 then Int.incr res;
         new_acc)
   in
   printf "%d\n" !res
