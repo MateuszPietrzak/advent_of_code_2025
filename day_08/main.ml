@@ -54,8 +54,7 @@ let solve_1 input =
     |> List.sort ~compare:Int.descending
     |> List.to_array
   in
-  printf "%d\n" (sizes.(0) * sizes.(1) * sizes.(2));
-  ()
+  printf "%d\n" (sizes.(0) * sizes.(1) * sizes.(2))
 
 let solve_2 input =
   let arr = input |> List.to_array in
@@ -98,8 +97,7 @@ let solve_2 input =
         union a b;
         if Int.equal !res 0 then
           if Int.equal size.(find a) 1000 then res := arr.(a).x * arr.(b).x));
-  printf "%d\n" !res;
-  ()
+  printf "%d\n" !res
 
 let parse_input lines =
   let open Re in
