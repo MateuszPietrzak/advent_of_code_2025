@@ -4,7 +4,7 @@ let solve_1 input =
   let cart = List.cartesian_product input input in
   let res =
     List.fold cart ~init:0 ~f:(fun acc ((d1, d1'), (d2, d2')) ->
-        let area = Int.abs (d1 - d2 + 1) * Int.abs (d1' - d2' + 1) in
+        let area = (Int.abs (d1 - d2) + 1) * (Int.abs (d1' - d2') + 1) in
         Int.max acc area)
   in
   printf "%d\n" res
