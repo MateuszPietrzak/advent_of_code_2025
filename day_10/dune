@@ -1,3 +1,3 @@
 (executable
  (name main)
- (libraries base core aoc re))
+ (libraries base core aoc re lacaml))
