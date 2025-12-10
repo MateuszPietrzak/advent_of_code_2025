@@ -1,5 +1,4 @@
 open! Core
-open! Lacaml.S
 
 type indicator = On | Off
 
@@ -31,99 +30,59 @@ let solve_1 input =
   printf "%d\n" res
 
 let solve_2 input =
-  let rec gen_splits sum length =
-    if length > 5 then(    printf "%d\n" length;
-    Out_channel.flush stdout);
-
-    if Int.equal length 0 then []
-    else if Int.equal length 1 then [ [ sum ] ]
-    else
-      List.init (sum + 1) ~f:(fun i ->
-          gen_splits (sum - i) (length - 1) |> List.map ~f:(fun l -> i :: l))
-      |> List.concat
-  in
-  let apply_split state split ops =
-    state
-    |> List.mapi ~f:(fun i v ->
-        let coeffs = ops |> List.map ~f:(fun op -> op.(i)) in
-        let sum =
-          List.zip_exn coeffs split
-          |> List.map ~f:(fun (a, b) -> a * b)
-          |> List.fold ~init:0 ~f:( + )
-        in
-        v - sum)
-  in
-  let rec find_best acc ops state index =
-    if Int.equal index (List.length state) then acc
-    else
-      let this_ops = List.filter ops ~f:(fun op -> Int.equal op.(index) 1) in
-      let next_ops = List.filter ops ~f:(fun op -> Int.equal op.(index) 0) in
-      let to_reach = List.nth_exn state index in
-
-      (* printf "at index %d\n" index; *)
-      (* printf "with state "; *)
-      (* List.iter state ~f:(printf "%d "); *)
-      (* printf "\n"; *)
-      (* printf "%d, %d -> %d\n" (List.length this_ops) (List.length next_ops) *)
-      (*   to_reach; *)
-      (* printf "acc = %d\n" acc; *)
-      Out_channel.flush stdout;
-
-      if Int.equal (List.length this_ops) 0 then
-        if Int.equal to_reach 0 then find_best acc next_ops state (index + 1)
-        else Int.max_value / 2
-      else
-        let splits = gen_splits to_reach (List.length this_ops) in
-        printf "gen_splits\n";
-        Out_channel.flush stdout;
-
-        let res =
-          splits
-          |> List.map ~f:(fun split ->
-              let new_state = apply_split state split this_ops in
-              let min_val =
-                List.fold new_state ~init:Int.max_value ~f:Int.min
-              in
-              if min_val < 0 then Int.max_value / 2
-              else (
-                if Int.equal index 0 then (
-                  printf "about to go down with state\n";
-                  List.iter new_state ~f:(printf "%d ");
-                  printf "\nusing split\n";
-                  List.iter split ~f:(printf "%d ");
-                  printf "\n");
-                Out_channel.flush stdout;
-                let r' =
-                  find_best (acc + to_reach) next_ops new_state (index + 1)
-                in
-                if Int.equal index 0 then printf "r' = %d\n\n" r';
-                r'))
-          |> List.fold ~init:Int.max_value ~f:Int.min
-        in
-        res
-  in
   let res =
     List.fold input ~init:0 ~f:(fun acc (_i, b, j) ->
-        List.iter j ~f:(fun jl -> printf "%d " jl);
-        printf "\n";
+        let open Z3 in
+        let ctx = mk_context [] in
+        let opt = Optimize.mk_opt ctx in
 
-        let ops =
-          List.map b ~f:(fun button ->
-              let res = Array.init (List.length j) ~f:(const 0) in
-              List.iter button ~f:(fun it -> res.(it) <- 1);
-              res)
+        let zero = Arithmetic.Integer.mk_numeral_i ctx 0 in
+        let int_sort = Z3.Arithmetic.Integer.mk_sort ctx in
+
+        let buttons =
+          List.mapi b ~f:(fun i _ ->
+              let sym = Symbol.mk_string ctx ("b" ^ Int.to_string i) in
+              let r = Expr.mk_const ctx sym int_sort in
+              let c = Arithmetic.mk_ge ctx r zero in
+              Optimize.add opt [ c ];
+              r)
         in
 
-        List.iter ops ~f:(fun op ->
-            printf "op: ";
-            Array.iter op ~f:(fun i -> printf "%d " i);
-            printf "\n");
+        List.mapi j ~f:(fun i joltage ->
+            let incrs =
+              List.mapi b ~f:(fun j button -> (j, button))
+              |> List.filter ~f:(fun (_, button) ->
+                  match List.find button ~f:(Int.equal i) with
+                  | Some _ -> true
+                  | None -> false)
+              |> List.map ~f:fst
+              |> List.map ~f:(fun j -> List.nth_exn buttons j)
+            in
+            let target = Arithmetic.Integer.mk_numeral_i ctx joltage in
+            let sum = Arithmetic.mk_add ctx incrs in
+            Boolean.mk_eq ctx sum target)
+        |> Optimize.add opt;
 
-        let r = find_best 0 ops j 0 in
-        printf "%d\n\n" r;
-        Out_channel.flush stdout;
+        let presses =
+          Expr.mk_const ctx (Symbol.mk_string ctx "presses") int_sort
+        in
+        let sum = Arithmetic.mk_add ctx buttons in
+        let c = Boolean.mk_eq ctx presses sum in
 
-        acc + r)
+        Optimize.add opt [ c ];
+
+        let _ = Optimize.minimize opt presses in
+
+        assert (match Optimize.check opt with SATISFIABLE -> true | _ -> false);
+
+        let open Option.Monad_infix in
+        let r_opt =
+          Optimize.get_model opt >>= fun model ->
+          Model.evaluate model presses false >>= fun expr ->
+          Expr.to_string expr |> Int.of_string_opt
+        in
+
+        match r_opt with None -> assert false | Some x -> acc + x)
   in
   printf "%d\n" res
 
