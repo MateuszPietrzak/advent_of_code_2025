@@ -65,16 +65,16 @@ let solve_2 input =
         if Int.equal in_list.(x) 0 then Queue.enqueue topo_q x);
     ()
   done;
+  let ordering =
+    Array.mapi input ~f:(fun i _ -> (i, topo.(i)))
+    |> Array.filter ~f:(fun (i, _) -> List.length input.(i) > 0)
+    |> Array.to_list
+    |> List.sort ~compare:(fun (_i, o) (_i', o') -> o - o')
+  in
   let get_res from_key to_key =
     let comb =
       Array.init len ~f:(fun i ->
           if Int.equal i (key_to_ind from_key) then 1 else 0)
-    in
-    let ordering =
-      Array.mapi input ~f:(fun i _ -> (i, topo.(i)))
-      |> Array.filter ~f:(fun (i, _) -> List.length input.(i) > 0)
-      |> Array.to_list
-      |> List.sort ~compare:(fun (_i, o) (_i', o') -> o - o')
     in
     List.iter ordering ~f:(fun (i, _o) ->
         let ths = comb.(i) in
