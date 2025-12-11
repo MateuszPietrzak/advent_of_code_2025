@@ -36,13 +36,12 @@ let solve_1 input =
     Array.mapi input ~f:(fun i _ -> (i, topo.(i)))
     |> Array.filter ~f:(fun (i, _) -> List.length input.(i) > 0)
     |> Array.to_list
-  |> List.sort ~compare:(fun (_i, o) (_i', o') -> o - o')
+    |> List.sort ~compare:(fun (_i, o) (_i', o') -> o - o')
   in
   List.iter ordering ~f:(fun (i, _o) ->
-       let ths = comb.(i) in
-       List.iter input.(i) ~f:(fun x -> comb.(x) <- comb.(x) + ths);
-       ()
-    );
+      let ths = comb.(i) in
+      List.iter input.(i) ~f:(fun x -> comb.(x) <- comb.(x) + ths);
+      ());
   printf "%d\n" comb.(key_to_ind "out")
 
 let solve_2 input =
@@ -68,19 +67,19 @@ let solve_2 input =
   done;
   let get_res from_key to_key =
     let comb =
-        Array.init len ~f:(fun i -> if Int.equal i (key_to_ind from_key) then 1 else 0)
+      Array.init len ~f:(fun i ->
+          if Int.equal i (key_to_ind from_key) then 1 else 0)
     in
     let ordering =
-        Array.mapi input ~f:(fun i _ -> (i, topo.(i)))
-        |> Array.filter ~f:(fun (i, _) -> List.length input.(i) > 0)
-        |> Array.to_list
-    |> List.sort ~compare:(fun (_i, o) (_i', o') -> o - o')
+      Array.mapi input ~f:(fun i _ -> (i, topo.(i)))
+      |> Array.filter ~f:(fun (i, _) -> List.length input.(i) > 0)
+      |> Array.to_list
+      |> List.sort ~compare:(fun (_i, o) (_i', o') -> o - o')
     in
     List.iter ordering ~f:(fun (i, _o) ->
         let ths = comb.(i) in
         List.iter input.(i) ~f:(fun x -> comb.(x) <- comb.(x) + ths);
-        ()
-        );
+        ());
     comb.(key_to_ind to_key)
   in
   let r1 = get_res "svr" "fft" in
